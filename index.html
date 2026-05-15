@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Sleep Settlement</title>
+<meta name="theme-color" content="#0b0e1f" />
+<meta name="description" content="Gamified sleep tracker — level up your hero with consistent rest." />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icon-192.png" type="image/png" />
+<link rel="apple-touch-icon" href="icon-180.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Sleep" />
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0b0e1f;
+  --card: #161a35;
+  --card-2: #1f2447;
+  --text: #f0f1ff;
+  --muted: #8b94c2;
+  --accent: #8a7dff;
+  --good: #6ee7a0;
+  --bad: #ff7a7a;
+  --gold: #ffd76b;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #1a1f3e, var(--bg));
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding:
+    calc(1rem + env(safe-area-inset-top))
+    calc(1rem + env(safe-area-inset-right))
+    calc(1rem + env(safe-area-inset-bottom))
+    calc(1rem + env(safe-area-inset-left));
+  -webkit-tap-highlight-color: transparent;
+}
+main { max-width: 32rem; margin: 0 auto; }
+h1 {
+  text-align: center;
+  margin: 0 0 1.5rem;
+  font-size: 1.4rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.card {
+  background: var(--card);
+  border-radius: 0.9rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+}
+.hero { text-align: center; }
+.avatar-wrap {
+  position: relative;
+  width: 14rem;
+  height: 18rem;
+  margin: 0 auto 0.75rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--card-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: filter 0.6s ease;
+}
+.placeholder-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 1rem;
+  gap: 0.5rem;
+}
+.upload-btn {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  background: var(--accent);
+  color: white;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.upload-btn input { display: none; }
+
+.lvl-1 img { filter: grayscale(100%) brightness(0.55) contrast(0.85); }
+.lvl-2 img { filter: grayscale(70%) brightness(0.7); }
+.lvl-3 img { filter: grayscale(35%) brightness(0.85); }
+.lvl-4 img { filter: none; }
+.lvl-5 img { filter: saturate(1.1); }
+.lvl-6 img { filter: saturate(1.2) contrast(1.05); }
+.lvl-7 img { filter: saturate(1.3) contrast(1.1) brightness(1.05); }
+
+.aura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.lvl-4 .aura { opacity: 1; box-shadow: inset 0 0 60px rgba(110, 231, 160, 0.25); }
+.lvl-5 .aura { opacity: 1; box-shadow: inset 0 0 80px rgba(255, 165, 100, 0.4); }
+.lvl-6 .aura { opacity: 1; box-shadow: inset 0 0 90px rgba(138, 125, 255, 0.45), inset 0 0 120px rgba(255, 215, 107, 0.25); animation: pulse 3s ease-in-out infinite; }
+.lvl-7 .aura { opacity: 1; box-shadow: inset 0 0 110px rgba(255, 215, 107, 0.55), 0 0 30px rgba(255, 215, 107, 0.5); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.18); }
+}
+
+.level-badge {
+  display: inline-block;
+  padding: 0.3rem 0.85rem;
+  background: var(--accent);
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+}
+.stats {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 0.6rem;
+}
+.stats b { color: var(--text); }
+.upgrades {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-height: 1.5rem;
+}
+.upgrade-pill {
+  display: inline-block;
+  background: rgba(138, 125, 255, 0.2);
+  color: var(--accent);
+  padding: 0.22rem 0.6rem;
+  border-radius: 0.35rem;
+  margin: 0.18rem;
+  font-size: 0.75rem;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.6rem;
+}
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+.night-slot {
+  aspect-ratio: 1;
+  border-radius: 0.4rem;
+  background: var(--card-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.night-slot.good { background: rgba(110, 231, 160, 0.22); color: var(--good); }
+.night-slot.bad { background: rgba(255, 122, 122, 0.22); color: var(--bad); }
+
+.widgets {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.widget {
+  background: var(--card-2);
+  border-radius: 0.6rem;
+  padding: 0.8rem 1rem;
+}
+.widget label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+.widget input[type="time"] {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 1.4rem;
+  font-weight: 600;
+  outline: none;
+  font-family: inherit;
+}
+.widget input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.6;
+  cursor: pointer;
+}
+.result { text-align: center; padding: 0.75rem 0 0.25rem; }
+.result .label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-bottom: 0.4rem;
+}
+.duration {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.duration.placeholder { color: var(--muted); font-size: 1.1rem; font-weight: 600; }
+.duration.good { color: var(--good); }
+.duration.bad { color: var(--bad); }
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.secondary { background: var(--card-2); color: var(--muted); }
+
+.battle-banner {
+  background: linear-gradient(135deg, #5a1b4d, #2a0e3a);
+  border: 1px solid var(--accent);
+}
+.battle-banner h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  text-align: center;
+}
+.battle-banner p {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+  text-align: center;
+}
+.battle-result {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 0.75rem;
+  text-align: center;
+}
+.battle-result.win { color: var(--good); }
+.battle-result.lose { color: var(--bad); }
+
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-2);
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<main>
+<h1>Sleep Settlement</h1>
+
+<div class="card hero">
+  <div class="avatar-wrap" id="avatarWrap">
+    <img id="avatarImg" alt="Hero" />
+    <div class="aura"></div>
+    <div class="placeholder-msg" id="placeholderMsg" style="display:none">
+      <div>Save your hero as <b>avatar.png</b> in this folder, or upload it:</div>
+      <label class="upload-btn">
+        Upload Avatar
+        <input type="file" id="avatarUpload" accept="image/*" />
+      </label>
+    </div>
+  </div>
+  <span class="level-badge" id="levelBadge">Level 1</span>
+  <div class="stats">Vigor: <b id="pointsVal">100</b> · Good weeks: <b id="streakVal">0</b></div>
+  <div class="upgrades" id="upgrades"></div>
+</div>
+
+<div class="card battle-banner" id="battleBanner" style="display:none">
+  <h2>⚔️ Weekly Battle</h2>
+  <p id="battleDesc"></p>
+  <button class="btn" id="fightBtn">Fight!</button>
+  <div class="battle-result" id="battleResult"></div>
+</div>
+
+<div class="card">
+  <div class="section-title">This week's nights</div>
+  <div class="week-row" id="weekRow"></div>
+</div>
+
+<div class="card">
+  <div class="section-title">Log a night's sleep</div>
+  <div class="widgets">
+    <div class="widget">
+      <label for="bedtime">Went to bed</label>
+      <input type="time" id="bedtime" />
+    </div>
+    <div class="widget">
+      <label for="waketime">Woke up</label>
+      <input type="time" id="waketime" />
+    </div>
+  </div>
+  <div class="result">
+    <div class="label">You slept</div>
+    <div class="duration placeholder" id="duration">Enter both times</div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="logBtn" disabled>Log Night</button>
+    <button class="btn secondary" id="resetBtn" title="Reset progress">Reset</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+</main>
+
+<script>
+const STATE_KEY = "sleepSettlement.v1";
+const AVATAR_KEY = "sleepSettlement.avatar";
+const GOOD_SLEEP_HOURS = 7;
+const BAD_NIGHT_PENALTY = 15;
+
+const UPGRADES = {
+  2: "Leather Coat",
+  3: "Steel Blade",
+  4: "Flame Hand",
+  5: "Moonblessed",
+  6: "Castle Keep",
+  7: "Eternal Vigor",
+};
+
+const startingState = () => ({
+  level: 1,
+  points: 100,
+  weekNights: [],
+  consecutiveGoodWeeks: 0,
+  upgrades: [],
+});
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return startingState();
+    return { ...startingState(), ...JSON.parse(raw) };
+  } catch { return startingState(); }
+}
+function saveState() {
+  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+}
+
+const avatarImg = document.getElementById("avatarImg");
+const placeholderMsg = document.getElementById("placeholderMsg");
+const avatarUpload = document.getElementById("avatarUpload");
+const avatarWrap = document.getElementById("avatarWrap");
+
+function setAvatar(src) {
+  avatarImg.src = src;
+  avatarImg.style.display = "block";
+  placeholderMsg.style.display = "none";
+}
+function showPlaceholder() {
+  avatarImg.style.display = "none";
+  placeholderMsg.style.display = "flex";
+}
+
+const storedAvatar = localStorage.getItem(AVATAR_KEY);
+if (storedAvatar) {
+  setAvatar(storedAvatar);
+} else {
+  avatarImg.onerror = () => showPlaceholder();
+  avatarImg.src = "avatar.png";
+}
+
+avatarUpload.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    localStorage.setItem(AVATAR_KEY, reader.result);
+    setAvatar(reader.result);
+  };
+  reader.readAsDataURL(file);
+});
+
+const bedtime = document.getElementById("bedtime");
+const waketime = document.getElementById("waketime");
+const durationEl = document.getElementById("duration");
+const logBtn = document.getElementById("logBtn");
+
+function parseMinutes(v) {
+  const [h, m] = v.split(":").map(Number);
+  return h * 60 + m;
+}
+function computeDiff() {
+  if (!bedtime.value || !waketime.value) return null;
+  let diff = parseMinutes(waketime.value) - parseMinutes(bedtime.value);
+  if (diff <= 0) diff += 24 * 60;
+  return diff;
+}
+function updateDuration() {
+  const diff = computeDiff();
+  if (diff == null) {
+    durationEl.textContent = "Enter both times";
+    durationEl.className = "duration placeholder";
+    logBtn.disabled = true;
+    return;
+  }
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  durationEl.textContent = `${h}h ${m}m`;
+  const hoursDecimal = diff / 60;
+  durationEl.className = "duration " + (hoursDecimal >= GOOD_SLEEP_HOURS ? "good" : "bad");
+  logBtn.disabled = false;
+}
+bedtime.addEventListener("input", updateDuration);
+waketime.addEventListener("input", updateDuration);
+
+logBtn.addEventListener("click", () => {
+  const diff = computeDiff();
+  if (diff == null) return;
+  const hours = diff / 60;
+  const good = hours >= GOOD_SLEEP_HOURS;
+  state.weekNights.push({ hours: +hours.toFixed(2), good });
+  if (!good) {
+    state.points = Math.max(0, state.points - BAD_NIGHT_PENALTY);
+    toast(`Bad night (${hours.toFixed(1)}h) — −${BAD_NIGHT_PENALTY} Vigor`);
+  } else {
+    toast(`Good night (${hours.toFixed(1)}h) logged`);
+  }
+  bedtime.value = "";
+  waketime.value = "";
+  updateDuration();
+  saveState();
+  render();
+  if (state.weekNights.length >= 7) showBattle();
+});
+
+const battleBanner = document.getElementById("battleBanner");
+const battleDesc = document.getElementById("battleDesc");
+const battleResult = document.getElementById("battleResult");
+const fightBtn = document.getElementById("fightBtn");
+
+function winChanceFor(badCount) {
+  return Math.max(10, 95 - badCount * 12);
+}
+
+function showBattle() {
+  const badCount = state.weekNights.filter(n => !n.good).length;
+  const chance = winChanceFor(badCount);
+  battleBanner.style.display = "block";
+  battleDesc.textContent = `A monster strikes at week's end. Bad nights: ${badCount}. Odds of victory: ${chance}%.`;
+  battleResult.textContent = "";
+  fightBtn.disabled = false;
+  battleBanner.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+fightBtn.addEventListener("click", () => {
+  const badCount = state.weekNights.filter(n => !n.good).length;
+  const chance = winChanceFor(badCount);
+  const won = Math.random() * 100 < chance;
+  fightBtn.disabled = true;
+
+  if (won) {
+    if (badCount === 0 && state.level < 7) {
+      state.level += 1;
+      const upgrade = UPGRADES[state.level];
+      if (upgrade) state.upgrades.push(upgrade);
+      state.consecutiveGoodWeeks += 1;
+      battleResult.className = "battle-result win";
+      battleResult.textContent = `Victory! Leveled up to ${state.level} — unlocked ${upgrade}.`;
+    } else if (badCount === 0) {
+      state.consecutiveGoodWeeks += 1;
+      state.points += 25;
+      battleResult.className = "battle-result win";
+      battleResult.textContent = `Flawless victory! +25 Vigor (max level reached).`;
+    } else {
+      state.consecutiveGoodWeeks = 0;
+      battleResult.className = "battle-result win";
+      battleResult.textContent = `Victory — but no level up (${badCount} bad night${badCount === 1 ? "" : "s"}).`;
+    }
+  } else {
+    battleResult.className = "battle-result lose";
+    battleResult.textContent = `Defeat! Your hero falls. All upgrades lost.`;
+    state = startingState();
+  }
+  state.weekNights = [];
+  saveState();
+  render();
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (!confirm("Reset all progress?")) return;
+  state = startingState();
+  saveState();
+  battleBanner.style.display = "none";
+  render();
+});
+
+function render() {
+  document.getElementById("levelBadge").textContent = `Level ${state.level}`;
+  document.getElementById("pointsVal").textContent = state.points;
+  document.getElementById("streakVal").textContent = state.consecutiveGoodWeeks;
+
+  const upgEl = document.getElementById("upgrades");
+  upgEl.innerHTML = state.upgrades.length
+    ? state.upgrades.map(u => `<span class="upgrade-pill">${u}</span>`).join("")
+    : `<span style="opacity:0.65">No upgrades yet — survive a perfect week to unlock.</span>`;
+
+  avatarWrap.classList.remove("lvl-1","lvl-2","lvl-3","lvl-4","lvl-5","lvl-6","lvl-7");
+  avatarWrap.classList.add("lvl-" + state.level);
+
+  const weekRow = document.getElementById("weekRow");
+  weekRow.innerHTML = "";
+  for (let i = 0; i < 7; i++) {
+    const slot = document.createElement("div");
+    slot.className = "night-slot";
+    const night = state.weekNights[i];
+    if (night) {
+      slot.classList.add(night.good ? "good" : "bad");
+      slot.textContent = night.good ? "✓" : "✗";
+    } else {
+      slot.textContent = i + 1;
+    }
+    weekRow.appendChild(slot);
+  }
+}
+
+const toastEl = document.getElementById("toast");
+let toastTimer;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2500);
+}
+
+render();
+updateDuration();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

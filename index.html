@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sleep Tracker</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0f1226;
+    --card: #1a1f3a;
+    --text: #f4f4ff;
+    --muted: #9aa3c7;
+    --accent: #8a7dff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  main {
+    width: 100%;
+    max-width: 28rem;
+  }
+  h1 {
+    text-align: center;
+    margin: 0 0 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  .widgets {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .widget {
+    background: var(--card);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+  }
+  .widget label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .widget input[type="time"] {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 500;
+    padding: 0;
+    outline: none;
+    font-family: inherit;
+  }
+  .widget input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+    cursor: pointer;
+  }
+  .result {
+    background: var(--card);
+    border-radius: 0.75rem;
+    padding: 2rem 1.25rem;
+    text-align: center;
+  }
+  .result .label {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+  .result .duration {
+    font-size: 2.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .result .duration.placeholder {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sleep Tracker</h1>
+  <div class="widgets">
+    <div class="widget">
+      <label for="bedtime">Went to bed</label>
+      <input type="time" id="bedtime" />
+    </div>
+    <div class="widget">
+      <label for="waketime">Woke up</label>
+      <input type="time" id="waketime" />
+    </div>
+  </div>
+  <div class="result">
+    <div class="label">You slept</div>
+    <div class="duration placeholder" id="duration">Enter both times</div>
+  </div>
+</main>
+<script>
+  const bedtime = document.getElementById("bedtime");
+  const waketime = document.getElementById("waketime");
+  const duration = document.getElementById("duration");
+
+  function parseMinutes(value) {
+    const [h, m] = value.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  function update() {
+    if (!bedtime.value || !waketime.value) {
+      duration.textContent = "Enter both times";
+      duration.classList.add("placeholder");
+      return;
+    }
+    const bed = parseMinutes(bedtime.value);
+    const wake = parseMinutes(waketime.value);
+    let diff = wake - bed;
+    if (diff <= 0) diff += 24 * 60;
+    const hours = Math.floor(diff / 60);
+    const minutes = diff % 60;
+    duration.textContent = `${hours}h ${minutes}m`;
+    duration.classList.remove("placeholder");
+  }
+
+  bedtime.addEventListener("input", update);
+  waketime.addEventListener("input", update);
+</script>
+</body>
+</html>
